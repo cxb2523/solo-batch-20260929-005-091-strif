@@ -760,3 +760,56 @@ def lenb(s: str, encoding: str = "utf-8") -> int:
     Convenience for length of a string in bytes.
     """
     return len(s.encode(encoding))
+
+
+#
+# ---- tbd archive CLI ----
+
+
+def main(argv: list[str] | None = None) -> int:
+    """
+    CLI entry point for the tbd archive service.
+
+    Usage:
+      tbd archive run [--apply] [--tbd-dir .tbd] [--lock-timeout SECS]
+      tbd archive serve [--port PORT] [--tbd-dir .tbd] [--no-browser]
+    """
+    import argparse
+    import sys
+
+    args_list = list(sys.argv[1:] if argv is None else argv)
+    if args_list and args_list[0] == "tbd":
+        args_list = args_list[1:]
+
+    parser = argparse.ArgumentParser(prog="tbd")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+    archive_parser = subparsers.add_parser("archive", help="Archive tbd items.")
+    archive_sub = archive_parser.add_subparsers(dest="archive_command", required=True)
+
+    run_parser = archive_sub.add_parser("run", help="Plan (and optionally apply) archiving.")
+    run_parser.add_argument("--apply", action="store_true", help="Actually move files.")
+    run_parser.add_argument("--tbd-dir", default=".tbd", help="Path to the .tbd directory.")
+    run_parser.add_argument(
+        "--lock-timeout", type=float, default=10.0, help="Seconds to wait for the archive lock."
+    )
+
+    serve_parser = archive_sub.add_parser("serve", help="Run the local archive web service.")
+    serve_parser.add_argument("--port", type=int, default=8765, help="Port to listen on.")
+    serve_parser.add_argument("--tbd-dir", default=".tbd", help="Path to the .tbd directory.")
+    serve_parser.add_argument(
+        "--no-browser", action="store_true", help="Do not open a browser tab."
+    )
+
+    args = parser.parse_args(args_list)
+
+    from strif.tbd_archive import run_archive, serve
+
+    if args.archive_command == "run":
+        return run_archive(args.tbd_dir, apply=args.apply, lock_timeout=args.lock_timeout)
+    else:
+        serve(args.tbd_dir, port=args.port, open_browser=not args.no_browser)
+        return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

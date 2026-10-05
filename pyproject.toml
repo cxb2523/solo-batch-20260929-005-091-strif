@@ -5,6 +5,9 @@ Repository = "https://github.com/jlevy/strif"
 # Homepage = "https://..."
 # Documentation = "https://..."
 
+[project.scripts]
+tbd = "strif.strif:main"
+
 [project]
 name = "strif"
 description = "Tiny, useful Python lib for strings and files"
